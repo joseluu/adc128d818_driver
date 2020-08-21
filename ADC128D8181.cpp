@@ -64,8 +64,13 @@ void ADC128D818::begin() {
     }
     delay(35);
   }
-  
+
   Serial.println("made it out");
+
+  // Ensure device is shut down before programming certain registers ...
+  setRegister(CONFIG_REG, 0);
+
+  delay(100);
 
   // program advanced config reg
   setRegister(ADV_CONFIG_REG, ref_mode | (op_mode << 1));
@@ -83,21 +88,29 @@ void ADC128D818::begin() {
   setRegister(CONFIG_REG, 1);
 }
 
+uint8_t ADC128D818::conversions_done(void) {
+  setRegisterAddress(BUSY_STATUS_REG);
+  uint8_t status = readCurrentRegister8();
+  if (status & (1 << BUSY_BIT)) {
+    return false;
+  }
+  return true;
+}
+
 uint16_t ADC128D818::read(uint8_t channel) {
   setRegisterAddress(READ_REG_BASE + channel);
   Wire.requestFrom(addr, (uint8_t)2);
-  while (!Wire.available()) {
+  while (Wire.available() < 2) {
     delay(1);
   }
-  uint8_t high_byte = Wire.read();
-  uint8_t low_byte = Wire.read();
-  
-  // Serial.print("h: ");
-  // Serial.print(high_byte);
-  // Serial.print(" l: ");
-  // Serial.println(low_byte);
-  
-  uint16_t result = ((((uint16_t)high_byte) << 8) | ((uint16_t)low_byte)) & 0x0FFF;
+  uint8_t reading[2];
+  Wire.readBytes(reading, 2);
+  uint8_t high_byte = reading[0];
+  uint8_t low_byte = reading[1];
+
+  uint16_t result = (((uint16_t)high_byte) << 8) | ((uint16_t)low_byte);
+  result >>= 4;
+
   return result;
 }
 

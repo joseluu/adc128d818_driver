@@ -13,7 +13,7 @@ enum conv_mode_t {
 
 enum operation_mode_t {
   SINGLE_ENDED_WITH_TEMP = 0,
-  SINGLE_ENDED = 1, 
+  SINGLE_ENDED = 1,
   DIFFERENTIAL = 2,
   MIXED = 3
 };
@@ -21,7 +21,7 @@ enum operation_mode_t {
 class ADC128D818 {
 public:
   ADC128D818(uint8_t address);
-  
+
   void setReference(double ref_voltage);
   void setReferenceMode(reference_mode_t mode);
 
@@ -31,13 +31,15 @@ public:
 
   void setConversionMode(conv_mode_t mode);
 
-  void begin();
+  void begin(void);
+
+  uint8_t conversions_done(void);
 
   uint16_t read(uint8_t channel);
 
   double readConverted(uint8_t channel);
 
-  double readTemperatureConverted();
+  double readTemperatureConverted(void);
 
 private:
   uint8_t addr;
