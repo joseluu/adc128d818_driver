@@ -21,8 +21,8 @@ enum operation_mode_t {
 class ADC128D818 {
 public:
   ADC128D818(uint8_t address);
-
-  void setReference(double ref_voltage);
+  
+  void setReference(float ref_voltage);
   void setReferenceMode(reference_mode_t mode);
 
   void setOperationMode(operation_mode_t mode);
@@ -31,20 +31,18 @@ public:
 
   void setConversionMode(conv_mode_t mode);
 
-  void begin(void);
-
-  uint8_t conversions_done(void);
+ void begin(void);  uint8_t conversions_done(void);
 
   uint16_t read(uint8_t channel);
 
-  double readConverted(uint8_t channel);
+  float readConverted(uint8_t channel);
 
-  double readTemperatureConverted(void);
+  float readTemperatureConverted(void);
 
 private:
   uint8_t addr;
   uint8_t disabled_mask;
-  double ref_v;
+  float ref_v;
 
   reference_mode_t ref_mode;
   operation_mode_t op_mode;

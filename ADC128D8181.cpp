@@ -34,7 +34,7 @@ ADC128D818::ADC128D818(uint8_t address) {
   conv_mode = CONTINUOUS;
 }
 
-void ADC128D818::setReference(double ref_voltage) {
+void ADC128D818::setReference(float ref_voltage) {
   ref_v = ref_voltage;
 }
 
@@ -64,9 +64,8 @@ void ADC128D818::begin() {
     }
     delay(35);
   }
-
-  Serial.println("made it out");
-
+  
+  Serial.println("ready!");
   // Ensure device is shut down before programming certain registers ...
   setRegister(CONFIG_REG, 0);
 
@@ -100,31 +99,31 @@ uint8_t ADC128D818::conversions_done(void) {
 uint16_t ADC128D818::read(uint8_t channel) {
   setRegisterAddress(READ_REG_BASE + channel);
   Wire.requestFrom(addr, (uint8_t)2);
-  while (Wire.available() < 2) {
+  while (Wire.available()<2) {
     delay(1);
   }
+  
   uint8_t reading[2];
   Wire.readBytes(reading, 2);
   uint8_t high_byte = reading[0];
   uint8_t low_byte = reading[1];
-
-  uint16_t result = (((uint16_t)high_byte) << 8) | ((uint16_t)low_byte);
-  result >>= 4;
+  
+  uint16_t result = result=high_byte*256 + low_byte;
 
   return result;
+
 }
 
-double ADC128D818::readConverted(uint8_t channel) {
-  return (double)read(channel) / 4096.0 * ref_v;
+float ADC128D818::readConverted(uint8_t channel) {
+  return (read(channel)>>4) / 4096.0f * ref_v;
 }
 
-double ADC128D818::readTemperatureConverted() {
-  uint16_t raw = read(7);
-  if (raw & 0x100 == 0) {
-    return (double)raw / 2;
-  } else {
-    return -(double)(512 - raw) / 2;
+float ADC128D818::readTemperatureConverted() {
+  short raw = read(7)>>7;
+  if (raw > 255){
+    raw = raw - 512;
   }
+  return raw / 2.0f;
 }
 
 
