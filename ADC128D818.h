@@ -51,7 +51,7 @@ private:
   operation_mode_t op_mode;
   conv_mode_t conv_mode;
 
-  void initTransmission();
+  void initI2c();
   void setRegisterAddress(uint8_t reg_addr);
   void setRegister(uint8_t reg_addr, uint8_t value);
   uint8_t readCurrentRegister8();

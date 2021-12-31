@@ -11,7 +11,17 @@ void setup() {
   adc.begin();
 }
 
-float mcp9701Convert(float measurement){
+float mcp9700Convert(float measurement){ // or any sensor with slope 10mV/dC like TMP235-Q1
+  float refTemp=13.0;
+  float refV=0.6;
+  float slope=0.010;
+
+  float temp;
+  temp = refTemp +  (measurement - refV)/slope ;
+  return temp;
+}
+
+float mcp9701Convert(float measurement){ // or any sensor with slope 19.5mV/dC like TMP236-Q1
   float refTemp=13.0;
   float refV=0.6;
   float slope=0.0195;
@@ -28,9 +38,11 @@ void loop() {
     Serial.print(i);
     Serial.print(": ");
     Serial.print(value);
-    Serial.print(": ");
+    Serial.print("V/ ");
+    Serial.print(mcp9700Convert(value));
+    Serial.print(" deg C/ ");
     Serial.print(mcp9701Convert(value));
-    Serial.println();
+    Serial.println(" deg C");
   }
   // ... and the internal temp sensor
   Serial.print("Temp: ");

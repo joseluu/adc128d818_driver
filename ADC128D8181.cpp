@@ -60,7 +60,6 @@ void ADC128D818::begin() {
   setRegisterAddress(BUSY_STATUS_REG);
   uint8_t statusValue=readCurrentRegister8();
 
-  Serial.println(i2cError);
   if (i2cError != 0) {
     Serial.print("I2C status: ");
     Serial.print(i2cError);
@@ -143,7 +142,7 @@ bool ADC128D818::isActive(){
 // private methods
 //
 
-void ADC128D818::initTransmission(){
+void ADC128D818::initI2c(){
   if (!i2cInitialized) {
     if (sda == 21) {
         wire=&Wire1;
@@ -164,22 +163,22 @@ void ADC128D818::initTransmission(){
 }
 
 void ADC128D818::setRegisterAddress(uint8_t reg_addr) {
-  initTransmission();
+  initI2c();
   wire->beginTransmission(addr);
   wire->write(reg_addr);
-  wire->endTransmission();
+  i2cError = wire->endTransmission();
 }
 
 void ADC128D818::setRegister(uint8_t reg_addr, uint8_t value) {
-  initTransmission();
+  initI2c();
   wire->beginTransmission(addr);
   wire->write(reg_addr);
   wire->write(value);
-  wire->endTransmission();
+  i2cError = wire->endTransmission();
 }
 
 uint8_t ADC128D818::readCurrentRegister8() {
-  initTransmission();
+  initI2c();
   wire->requestFrom(addr, (uint8_t)1);
   while (!wire->available()) {
     delay(1);
