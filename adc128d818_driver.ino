@@ -1,10 +1,9 @@
 #include "Wire.h"
 #include "ADC128D818.h"
 
-ADC128D818 adc(0x1D);
+ADC128D818 adc(0x1D, 21, 22);
 
 void setup() {
-  Wire.begin();
   Serial.begin(115200);
   pinMode(13, OUTPUT);
   adc.setReferenceMode(INTERNAL_REF);

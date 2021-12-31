@@ -22,9 +22,9 @@
 #define BUSY_BIT 0
 #define NOT_READY_BIT 1
 
-ADC128D818::ADC128D818(uint8_t address) {
-  this->addr = address;
+ADC128D818::ADC128D818(uint8_t i2c_addr,  uint8_t _sda, uint8_t _scl): addr(i2c_addr), sda(_sda), scl(_scl) {
 
+  i2cInitialized=false;
   // enable all channels disabled by default
   disabled_mask = 0;
 
@@ -55,19 +55,28 @@ void ADC128D818::setDisabledMask(uint8_t disabled_mask) {
 }
 
 void ADC128D818::begin() {
+
   // read busy reg until it returns 0
   setRegisterAddress(BUSY_STATUS_REG);
-  while (1) {
+  uint8_t statusValue=readCurrentRegister8();
+
+  Serial.println(i2cError);
+  if (i2cError != 0) {
+    Serial.print("I2C status: ");
+    Serial.print(i2cError);
+    Serial.println("I2C initialization failure: check port pin and address");
+  }
+  while ((statusValue & (1 << NOT_READY_BIT)) != 0) {
     Serial.println("waiting for ready bit unset");
-    if ((readCurrentRegister8() & (1 << NOT_READY_BIT)) == 0) {
-      break;
-    }
     delay(35);
+    statusValue=readCurrentRegister8();
   }
   
-  Serial.println("ready!");
+  Serial.println("device ready");
   // Ensure device is shut down before programming certain registers ...
   setRegister(CONFIG_REG, 0);
+  // Reset all
+  setRegister(CONFIG_REG, 1<<7);
 
   delay(100);
 
@@ -98,13 +107,13 @@ uint8_t ADC128D818::conversions_done(void) {
 
 uint16_t ADC128D818::read(uint8_t channel) {
   setRegisterAddress(READ_REG_BASE + channel);
-  Wire.requestFrom(addr, (uint8_t)2);
-  while (Wire.available()<2) {
+  wire->requestFrom(addr, (uint8_t)2);
+  while (wire->available()<2) {
     delay(1);
   }
   
   uint8_t reading[2];
-  Wire.readBytes(reading, 2);
+  wire->readBytes(reading, 2);
   uint8_t high_byte = reading[0];
   uint8_t low_byte = reading[1];
   
@@ -126,28 +135,54 @@ float ADC128D818::readTemperatureConverted() {
   return raw / 2.0f;
 }
 
+bool ADC128D818::isActive(){
+  return addr != 0;
+}
 
 //
 // private methods
 //
 
+void ADC128D818::initTransmission(){
+  if (!i2cInitialized) {
+    if (sda == 21) {
+        wire=&Wire1;
+    } else {
+        wire=&Wire;
+    }
+    wire->begin(sda,scl);
+    wire->setClock(100000);
+  
+    wire->beginTransmission(addr);
+    i2cError = wire->endTransmission();
+    if (i2cError != 0) {
+      Serial.print("I2C error: ");
+      Serial.println(i2cError);
+    }
+    i2cInitialized=true;
+  }
+}
+
 void ADC128D818::setRegisterAddress(uint8_t reg_addr) {
-  Wire.beginTransmission(addr);
-  Wire.write(reg_addr);
-  Wire.endTransmission();
+  initTransmission();
+  wire->beginTransmission(addr);
+  wire->write(reg_addr);
+  wire->endTransmission();
 }
 
 void ADC128D818::setRegister(uint8_t reg_addr, uint8_t value) {
-  Wire.beginTransmission(addr);
-  Wire.write(reg_addr);
-  Wire.write(value);
-  Wire.endTransmission();
+  initTransmission();
+  wire->beginTransmission(addr);
+  wire->write(reg_addr);
+  wire->write(value);
+  wire->endTransmission();
 }
 
 uint8_t ADC128D818::readCurrentRegister8() {
-  Wire.requestFrom(addr, (uint8_t)1);
-  while (!Wire.available()) {
+  initTransmission();
+  wire->requestFrom(addr, (uint8_t)1);
+  while (!wire->available()) {
     delay(1);
   }
-  return Wire.read();
+  return wire->read();
 }
