@@ -123,7 +123,7 @@ uint16_t ADC128D818::read(uint8_t channel) {
 }
 
 float ADC128D818::readConverted(uint8_t channel) {
-  return (read(channel)>>4) / 4096.0f * ref_v;
+  return (read(channel)>>4) / 4096.0f * ref_v * 1000.0f;
 }
 
 float ADC128D818::readTemperatureConverted() {
