@@ -31,7 +31,7 @@ public:
   uint8_t conversions_done(void);
   uint16_t read(uint8_t channel);
   float readConverted(uint8_t channel);
-  float readTemperatureConverted(void);
+  float readTemperatureInternal(void);
   
   bool isActive();
       

@@ -126,7 +126,7 @@ float ADC128D818::readConverted(uint8_t channel) {
   return (read(channel)>>4) / 4096.0f * ref_v * 1000.0f;
 }
 
-float ADC128D818::readTemperatureConverted() {
+float ADC128D818::readTemperatureInternal() {
   short raw = read(7)>>7;
   if (raw > 255){
     raw = raw - 512;

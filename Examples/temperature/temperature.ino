@@ -3,17 +3,20 @@
 #include "Wire.h"
 #include "ADC128D818.h"
 
+#define SYNC_PIN 13 // sync signal, to help with a led or scope if needed
 
-// HelTec ESP32 DevKit parameters
-#define D3 4
-#define D5 15
-SSD1306Wire  oled(0x3c, D3, D5);
-ADC128D818 adc(0x1D, 21, 22);
+
+// Board must be properly declared in the IDE or CLI parameters
+// in order to get the correct symbolic pin assignments
+// for instance https://github.com/espressif/arduino-esp32/blob/master/variants/heltec_wifi_kit_32/pins_arduino.h
+
+SSD1306Wire  oled(0x3c, SDA_OLED , SCL_OLED );
+ADC128D818 adc(0x1D, SDA , SCL );
 
 void setup() {
   oledSetup();
   Serial.begin(115200);
-  pinMode(13, OUTPUT);
+  pinMode(SYNC_PIN, OUTPUT);
   adc.setReferenceMode(INTERNAL_REF);
   adc.setReference(2.553); // device under test is slightly off
   adc.begin();
@@ -21,7 +24,7 @@ void setup() {
 
 float pt100Resistance(float mV){
   const float Vdd=3300;
-  const float R1=217.5f; // vallue of actual resistor
+  const float R1=217.5f; // value of actual resistor in series with the pt100
 
   float rMeasured = R1/(Vdd/mV -1);
   return rMeasured;
@@ -58,7 +61,8 @@ float mcp9701Convert(float measurement){ // or any sensor with slope 19.5mV/dC l
 }
 
 void loop() {
-  // IN0-IN6 ...
+  digitalWrite(SYNC_PIN, HIGH);
+  // IN0-IN6 ... read all
   for (int i = 0; i < 7; i++) {
     float value=adc.readConverted(i);
     if (i==0) {
@@ -76,12 +80,10 @@ void loop() {
   }
   // ... and the internal temp sensor
   Serial.print("Temp: ");
-  Serial.print(adc.readTemperatureConverted());
+  Serial.print(adc.readTemperatureInternal());
   Serial.println(" deg C");
 
-  digitalWrite(13, HIGH);
-  delay(500);
-  digitalWrite(13, LOW);
+  digitalWrite(SYNC_PIN, LOW); // end of read 
   delay(500);
 }
 
