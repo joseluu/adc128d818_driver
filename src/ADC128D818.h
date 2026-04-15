@@ -3,6 +3,8 @@
 
 #include "Arduino.h"
 
+typedef float (*adc_conversion_cb_t)(float mV);
+
 enum reference_mode_t {
   INTERNAL_REF = 0, EXTERNAL_REF = 1
 };
@@ -23,6 +25,7 @@ public:
   ADC128D818(uint8_t address,  uint8_t _sda, uint8_t _scl);
   
   void setReference(float ref_voltage);
+  void setOffset(float offset_mV);
   void setReferenceMode(reference_mode_t mode);
   void setOperationMode(operation_mode_t mode);
   void setDisabledMask(uint8_t disabled_mask);
@@ -30,7 +33,9 @@ public:
   void begin(void);  
   uint8_t conversions_done(void);
   uint16_t read(uint8_t channel);
+  float readMilliVolts(uint8_t channel);
   float readConverted(uint8_t channel);
+  void  setConversionCallback(uint8_t channel, adc_conversion_cb_t cb);
   float readTemperatureInternal(void);
   
   bool isActive();
@@ -39,6 +44,8 @@ public:
 private:
   uint8_t disabled_mask;
   float ref_v;
+  float offset_mV;
+  adc_conversion_cb_t conversion_cb[8];
 
   TwoWire *wire;
   bool i2cInitialized;
@@ -52,6 +59,7 @@ private:
   conv_mode_t conv_mode;
 
   void initI2c();
+  void ensureI2Cinitialized();
   void setRegisterAddress(uint8_t reg_addr);
   void setRegister(uint8_t reg_addr, uint8_t value);
   uint8_t readCurrentRegister8();

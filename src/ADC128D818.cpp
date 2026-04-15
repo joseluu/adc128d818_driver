@@ -22,6 +22,10 @@
 #define BUSY_BIT 0
 #define NOT_READY_BIT 1
 
+static float identityConversion(float mV) {
+  return mV;
+}
+
 ADC128D818::ADC128D818(uint8_t i2c_addr,  uint8_t _sda, uint8_t _scl): addr(i2c_addr), sda(_sda), scl(_scl) {
 
   i2cInitialized=false;
@@ -29,13 +33,22 @@ ADC128D818::ADC128D818(uint8_t i2c_addr,  uint8_t _sda, uint8_t _scl): addr(i2c_
   disabled_mask = 0;
 
   ref_v = 2.56f;
+  offset_mV = 0.0f;
   ref_mode = INTERNAL_REF;
   op_mode = SINGLE_ENDED_WITH_TEMP;
   conv_mode = CONTINUOUS;
+
+  for (uint8_t i = 0; i < 8; i++) {
+    conversion_cb[i] = identityConversion;
+  }
 }
 
 void ADC128D818::setReference(float ref_voltage) {
   ref_v = ref_voltage;
+}
+
+void ADC128D818::setOffset(float mV) {
+  offset_mV = mV;
 }
 
 void ADC128D818::setReferenceMode(reference_mode_t mode) {
@@ -61,7 +74,7 @@ void ADC128D818::begin() {
   uint8_t statusValue=readCurrentRegister8();
 
   if (i2cError != 0) {
-    Serial.print("I2C status: ");
+    Serial.print("I2C read error: ");
     Serial.print(i2cError);
     Serial.println("I2C initialization failure: check port pin and address");
   }
@@ -122,8 +135,16 @@ uint16_t ADC128D818::read(uint8_t channel) {
 
 }
 
+float ADC128D818::readMilliVolts(uint8_t channel) {
+  return (read(channel)>>4) / 4096.0f * ref_v * 1000.0f + offset_mV;
+}
+
 float ADC128D818::readConverted(uint8_t channel) {
-  return (read(channel)>>4) / 4096.0f * ref_v * 1000.0f;
+  return conversion_cb[channel](readMilliVolts(channel));
+}
+
+void ADC128D818::setConversionCallback(uint8_t channel, adc_conversion_cb_t cb) {
+  conversion_cb[channel] = (cb == nullptr) ? identityConversion : cb;
 }
 
 float ADC128D818::readTemperatureInternal() {
@@ -142,9 +163,9 @@ bool ADC128D818::isActive(){
 // private methods
 //
 
-void ADC128D818::initI2c(){
+void ADC128D818::ensureI2Cinitialized(){
   if (!i2cInitialized) {
-    if (sda == 21) {
+    if (sda == SDA) { // by default the ESP32 display uses Wire, so we use the other I2C bus
         wire=&Wire1;
     } else {
         wire=&Wire;
@@ -155,7 +176,7 @@ void ADC128D818::initI2c(){
     wire->beginTransmission(addr);
     i2cError = wire->endTransmission();
     if (i2cError != 0) {
-      Serial.print("I2C error: ");
+      Serial.print("I2C initialization error: ");
       Serial.println(i2cError);
     }
     i2cInitialized=true;
@@ -163,14 +184,14 @@ void ADC128D818::initI2c(){
 }
 
 void ADC128D818::setRegisterAddress(uint8_t reg_addr) {
-  initI2c();
+  ensureI2Cinitialized();
   wire->beginTransmission(addr);
   wire->write(reg_addr);
   i2cError = wire->endTransmission();
 }
 
 void ADC128D818::setRegister(uint8_t reg_addr, uint8_t value) {
-  initI2c();
+  ensureI2Cinitialized();
   wire->beginTransmission(addr);
   wire->write(reg_addr);
   wire->write(value);
@@ -178,7 +199,7 @@ void ADC128D818::setRegister(uint8_t reg_addr, uint8_t value) {
 }
 
 uint8_t ADC128D818::readCurrentRegister8() {
-  initI2c();
+  ensureI2Cinitialized();
   wire->requestFrom(addr, (uint8_t)1);
   while (!wire->available()) {
     delay(1);
