@@ -140,22 +140,42 @@ Channel assignment:
 | IN1     | TMP235AEDBZRQ1        | `tmp235Convert` | mV + °C  |
 | IN2     | *(disabled)*          | —               | —         |
 | IN3     | MCP9701               | `mcp9701Convert`| mV + °C  |
-| IN4     | raw voltage           | identity        | mV        |
+| IN4     | 10 mA ammeter (22.4 Ω shunt) | `ammeterConvert` | mV + mA |
 | IN5     | raw voltage           | identity        | mV        |
 | IN6     | *(disabled)*          | —               | —         |
 | IN7     | internal temp sensor  | —               | °C        |
 
-The three provided callbacks are:
+The four provided callbacks are:
 
 - **`pt100Convert(mV)`** — assumes a divider `Vdd → R1 → IN0 → PT100 → GND`
   with `Vdd = 3300 mV` and `R1 = 217.5 Ω`. Computes the PT100 resistance
   and inverts the Callendar–Van Dusen equation to get the temperature.
 - **`tmp235Convert(mV)`** — TI TMP235A: `Vout = 10 mV/°C · T + 500 mV`.
 - **`mcp9701Convert(mV)`** — Microchip MCP9701: `Vout = 19.5 mV/°C · T + 400 mV`.
+- **`ammeterConvert(mV)`** — illustrates that callbacks can return *any*
+  quantity, not just temperatures. Here, a 22.4 Ω current‑sense shunt
+  turns the mV reading into milliamps: `I[mA] = mV / 22.4`. Calibrated
+  so that 10 mA produces 224 mV at IN4.
 
-Unused channels are removed from the scan via
-`setDisabledMask(...)` to avoid wasting conversion cycles on floating
-inputs.
+### Enabling/disabling channels
+
+Channels are selected at compile time via `ENABLE_CHANNEL_N` defines at
+the top of the sketch:
+
+```cpp
+#define ENABLE_CHANNEL_0
+#define ENABLE_CHANNEL_1
+//#define ENABLE_CHANNEL_2
+#define ENABLE_CHANNEL_3
+#define ENABLE_CHANNEL_4
+#define ENABLE_CHANNEL_5
+//#define ENABLE_CHANNEL_6
+```
+
+Commenting one out adds it to `setDisabledMask(...)` (so the ADC
+doesn't waste conversion cycles on a floating input) *and* drops its
+read/Serial/OLED blocks from the build via `#ifdef` guards. OLED line
+positions cleanly close up when a channel is removed.
 
 ### Building the example
 
