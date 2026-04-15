@@ -1,0 +1,46 @@
+#######################################
+# Syntax Coloring Map For ADC128D818
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+ADC128D818	KEYWORD1
+adc_conversion_cb_t	KEYWORD1
+reference_mode_t	KEYWORD1
+conv_mode_t	KEYWORD1
+operation_mode_t	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setReference	KEYWORD2
+setOffset	KEYWORD2
+setReferenceMode	KEYWORD2
+setOperationMode	KEYWORD2
+setConversionMode	KEYWORD2
+setDisabledMask	KEYWORD2
+setConversionCallback	KEYWORD2
+begin	KEYWORD2
+conversions_done	KEYWORD2
+read	KEYWORD2
+readMilliVolts	KEYWORD2
+readConverted	KEYWORD2
+readTemperatureInternal	KEYWORD2
+isActive	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+INTERNAL_REF	LITERAL1
+EXTERNAL_REF	LITERAL1
+LOW_POWER	LITERAL1
+CONTINUOUS	LITERAL1
+ONE_SHOT	LITERAL1
+SINGLE_ENDED_WITH_TEMP	LITERAL1
+SINGLE_ENDED	LITERAL1
+DIFFERENTIAL	LITERAL1
+MIXED	LITERAL1

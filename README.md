@@ -6,7 +6,7 @@ reference, and configurable operation modes.
 
 Originally forked from Bryan Duxbury's driver:
 <https://github.com/dslc/adc128d818_driver>. Reworked as an Arduino
-library (adds `library.properties`, `src/`, and `Examples/`) and
+library (adds `library.properties`, `src/`, and `examples/`) and
 extended with per‑channel conversion callbacks.
 
 Tested on ESP32 (Heltec WiFi Kit 32). Should work on any Arduino core
@@ -125,9 +125,9 @@ adc.setConversionCallback(1, tmp235Convert);
 float tempC = adc.readConverted(1);   // 21.5 etc.
 ```
 
-## Example: `Examples/temperature`
+## Example: `examples/temperature`
 
-`Examples/temperature/temperature.ino` is a worked example targeting a
+`examples/temperature/temperature.ino` is a worked example targeting a
 Heltec WiFi Kit 32 with several temperature sensors wired to the ADC
 and the result shown on the on‑board SSD1306 OLED plus the Serial
 monitor.
@@ -181,9 +181,9 @@ positions cleanly close up when a channel is removed.
 
 ```bash
 arduino-cli compile --fqbn esp32:esp32:heltec_wifi_kit_32 \
-    --library . Examples/temperature
+    --library . examples/temperature
 arduino-cli upload  --fqbn esp32:esp32:heltec_wifi_kit_32 \
-    -p COM6 --library . Examples/temperature
+    -p COM6 --library . examples/temperature
 ```
 
 (Adjust the port and FQBN to match your board.)
